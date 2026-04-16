@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Литературный дневник</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f3f0;
+      color: #2e2e2e;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 80px;
+    }
+
+    /* Основные страницы */
+    .page {
+      display: none;
+      padding: 20px 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #4a3b2c 0%, #7f5e3a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #3e3326;
+      margin-bottom: 16px;
+    }
+
+    /* Плашки книг */
+    .books-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .book-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border: 1px solid #ede3d9;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .book-card:active {
+      transform: scale(0.98);
+      background: #fff;
+    }
+
+    .book-card-title {
+      font-size: 18px;
+      font-weight: 650;
+      color: #2e241b;
+      margin-bottom: 6px;
+    }
+
+    .book-card-author {
+      font-size: 15px;
+      color: #7b6e5d;
+    }
+
+    .book-card-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #9a8979;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #a3927e;
+      font-style: italic;
+      background: rgba(255,255,255,0.5);
+      border-radius: 20px;
+    }
+
+    /* Нижнее меню */
+    .bottom-menu {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(250, 245, 240, 0.95);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-top: 1px solid #e3d6ca;
+      padding: 8px 16px 20px;
+      display: flex;
+      justify-content: space-around;
+      z-index: 100;
+    }
+
+    .menu-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: none;
+      border: none;
+      color: #7f6e5c;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 30px;
+      transition: all 0.2s;
+    }
+
+    .menu-btn.active {
+      color: #634d37;
+      background: #e8dfd5;
+    }
+
+    .menu-btn .icon {
+      font-size: 24px;
+      margin-bottom: 2px;
+    }
+
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+
+    .modal.active {
+      display: block;
+    }
+
+    .modal-content {
+      background: #fffbf8;
+      margin: 20px auto;
+      max-width: 550px;
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+      font-size: 24px;
+      color: #3e3326;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: #a3927e;
+    }
+
+    /* Поля формы */
+    .field-group {
+      margin-bottom: 20px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #7b6e5d;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .field-value {
+      background: #f5f0eb;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 16px;
+      color: #2e241b;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .field-value:active {
+      background: #ede4dc;
+    }
+
+    .field-value.empty {
+      color: #b9aa99;
+      font-style: italic;
+    }
+
+    .field-input {
+      width: 100%;
+      background: white;
+      border: 1px solid #ddd0c4;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-family: inherit;
+    }
+
+    textarea.field-input {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    /* Система оценки */
+    .rating-summary {
+      background: #f5f0eb;
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+    }
+
+    .rating-total {
+      font-size: 28px;
+      font-weight: 700;
+      color: #6f5e4e;
+    }
+
+    .rating-max {
+      font-size: 16px;
+      color: #a3927e;
+    }
+
+    .rating-details {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #ddd0c4;
+    }
+
+    .rating-criteria {
+      margin-bottom: 16px;
+    }
+
+    .criteria-name {
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #4f3e2d;
+    }
+
+    .stars {
+      display: flex;
+      gap: 12px;
+    }
+
+    .star {
+      font-size: 28px;
+      cursor: pointer;
+      color: #d4c4b6;
+      transition: color 0.2s;
+    }
+
+    .star.filled {
+      color: #f5b342;
+    }
+
+    /* Статистика */
+    .stats-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 17px;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      color: #4f3a27;
+    }
+
+    /* Тёмная тема */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1f1b17;
+        color: #ede7df;
+      }
+      .book-card {
+        background: rgba(40, 35, 30, 0.95);
+        border-color: #4a3e34;
+      }
+      .book-card-title { color: #f0e6db; }
+      .modal-content {
+        background: #2c2620;
+      }
+      .field-value {
+        background: #3d342c;
+        color: #ede0d4;
+      }
+      .field-input {
+        background: #3d342c;
+        border-color: #5a4d41;
+        color: #ede0d4;
+      }
+      .bottom-menu {
+        background: rgba(30, 27, 24, 0.95);
+        border-color: #4a3e34;
+      }
+      .menu-btn.active {
+        background: #4a3e34;
+        color: #d4c5b6;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ДОМАШНЯЯ СТРАНИЦА -->
+<div class="page active" id="homePage">
+  <h1>📚 Литературный<br>дневник</h1>
+  <div id="booksList" class="books-grid"></div>
+</div>
+
+<!-- СТРАНИЦА СТАТИСТИКИ -->
+<div class="page" id="statsPage">
+  <h1>📊 Статистика</h1>
+  <div class="stats-card">
+    <div class="stat-row"><span>📖 Всего книг</span><span class="stat-value" id="totalBooksStat">0</span></div>
+    <div class="stat-row"><span>📄 Всего записей</span><span class="stat-value" id="totalEntriesStat">0</span></div>
+    <div class="stat-row"><span>⭐ Средняя оценка</span><span class="stat-value" id="avgRatingStat">0/12</span></div>
+    <div class="stat-row"><span>🌍 Любимая страна</span><span class="stat-value" id="topCountryStat">—</span></div>
+    <div class="stat-row"><span>📚 Любимый жанр</span><span class="stat-value" id="topGenreStat">—</span></div>
+  </div>
+  <h2>📈 По годам</h2>
+  <div id="statsByYear"></div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ДЛЯ ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ КНИГИ -->
+<div class="modal" id="bookModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Новая книга</h3>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    
+    <div id="bookForm">
+      <!-- Название -->
+      <div class="field-group">
+        <div class="field-label">Название</div>
+        <div class="field-value" id="displayTitle" onclick="editField('title')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Автор -->
+      <div class="field-group">
+        <div class="field-label">Автор</div>
+        <div class="field-value" id="displayAuthor" onclick="editField('author')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Год -->
+      <div class="field-group">
+        <div class="field-label">Год написания</div>
+        <div class="field-value" id="displayYear" onclick="editField('year')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Страна -->
+      <div class="field-group">
+        <div class="field-label">Страна</div>
+        <div class="field-value" id="displayCountry" onclick="editField('country')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Жанр -->
+      <div class="field-group">
+        <div class="field-label">Жанр</div>
+        <div class="field-value" id="displayGenre" onclick="editField('genre')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Время в книге -->
+      <div class="field-group">
+        <div class="field-label">Время в книге</div>
+        <div class="field-value" id="displayTimePeriod" onclick="editField('timePeriod')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Герои -->
+      <div class="field-group">
+        <div class="field-label">Герои</div>
+        <div class="field-value" id="displayCharacters" onclick="editField('characters')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Сюжет -->
+      <div class="field-group">
+        <div class="field-label">Сюжет</div>
+        <div class="field-value" id="displayPlot" onclick="editField('plot')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Впечатление -->
+      <div class="field-group">
+        <div class="field-label">Моё впечатление</div>
+        <div class="field-value" id="displayImpression" onclick="editField('impression')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Цитаты -->
+      <div class="field-group">
+        <div class="field-label">Цитаты</div>
+        <div class="field-value" id="displayQuotes" onclick="editField('quotes')">Нажмите, чтобы добавить</div>
+      </div>
+      
+      <!-- Оценка -->
+      <div class="field-group">
+        <div class="field-label">Оценка</div>
+        <div class="rating-summary" onclick="toggleRatingDetails()">
+          <div>
+            <span class="rating-total" id="totalRating">0</span>
+            <span class="rating-max">/12</span>
+          </div>
+          <div id="ratingDetails" style="display: none;" class="rating-details">
+            <div class="rating-criteria">
+              <div class="criteria-name">Красота изложения</div>
+              <div class="stars" id="starsStyle"></div>
+            </div>
+            <div class="rating-criteria">
+              <div class="criteria-name">Интересность сюжета</div>
+              <div class="stars" id="starsPlot"></div>
+            </div>
+            <div class="rating-criteria">
+              <div class="criteria-name">Глубина мысли</div>
+              <div class="stars" id="starsDepth"></div>
+            </div>
+            <div class="rating-criteria">
+              <div class="criteria-name">Общее впечатление</div>
+              <div class="stars" id="starsOverall"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- НИЖНЕЕ МЕНЮ -->
+<div class="bottom-menu">
+  <button class="menu-btn active" onclick="switchPage('home')">
+    <span class="icon">🏠</span>
+    <span>Главная</span>
+  </button>
+  <button class="menu-btn" onclick="switchPage('stats')">
+    <span class="icon">📊</span>
+    <span>Статистика</span>
+  </button>
+  <button class="menu-btn" onclick="openNewBookModal()">
+    <span class="icon">➕</span>
+    <span>Добавить</span>
+  </button>
+  <button class="menu-btn" onclick="exportData()">
+    <span class="icon">📤</span>
+    <span>Экспорт</span>
+  </button>
+  <button class="menu-btn" onclick="importData()">
+    <span class="icon">📥</span>
+    <span>Импорт</span>
+  </button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Состояние приложения
+  let appData = {
+    books: []
+  };
+
+  let currentBookId = null;
+  let editingField = null;
+  let ratings = {
+    style: 0,
+    plot: 0,
+    depth: 0,
+    overall: 0
+  };
+
+  // Инициализация
+  function init() {
+    loadData();
+    renderHomePage();
+    updateStats();
+    initStars();
+  }
+
+  // Загрузка из localStorage
+  function loadData() {
+    try {
+      const saved = localStorage.getItem('literaryDiary');
+      if (saved) {
+        appData = JSON.parse(saved);
+        if (!appData.books) appData.books = [];
+      }
+    } catch (e) {
+      console.error('Ошибка загрузки:', e);
+    }
+  }
+
+  // Сохранение в localStorage
+  function saveData() {
+    try {
+      localStorage.setItem('literaryDiary', JSON.stringify(appData));
+    } catch (e) {
+      console.error('Ошибка сохранения:', e);
+    }
+  }
+
+  // Переключение страниц
+  window.switchPage = function(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page + 'Page').classList.add('active');
+    
+    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+    event.target.closest('.menu-btn').classList.add('active');
+    
+    if (page === 'stats') updateStats();
+    if (page === 'home') renderHomePage();
+  };
+
+  // Рендер главной страницы
+  function renderHomePage() {
+    const container = document.getElementById('booksList');
+    
+    if (appData.books.length === 0) {
+      container.innerHTML = '<div class="empty-state">📚 Нажмите "Добавить", чтобы создать первую запись о книге</div>';
+      return;
+    }
+    
+    container.innerHTML = appData.books.map(book => `
+      <div class="book-card" onclick="openBook('${book.id}')">
+        <div class="book-card-title">${escapeHtml(book.title || 'Без названия')}</div>
+        <div class="book-card-author">${escapeHtml(book.author || 'Автор не указан')}</div>
+        <div class="book-card-meta">
+          ${book.year ? `<span>📅 ${book.year}</span>` : ''}
+          ${book.genre ? `<span>📚 ${book.genre}</span>` : ''}
+          ${book.rating ? `<span>⭐ ${book.rating}/12</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Открытие модального окна для новой книги
+  window.openNewBookModal = function() {
+    currentBookId = null;
+    document.getElementById('modalTitle').textContent = 'Новая книга';
+    
+    // Очистка полей
+    const fields = ['title', 'author', 'year', 'country', 'genre', 'timePeriod', 'characters', 'plot', 'impression', 'quotes'];
+    fields.forEach(f => {
+      document.getElementById('display' + f.charAt(0).toUpperCase() + f.slice(1)).textContent = 'Нажмите, чтобы добавить';
+      document.getElementById('display' + f.charAt(0).toUpperCase() + f.slice(1)).classList.add('empty');
+    });
+    
+    // Сброс оценок
+    ratings = { style: 0, plot: 0, depth: 0, overall: 0 };
+    updateTotalRating();
+    renderStars();
+    
+    document.getElementById('bookModal').classList.add('active');
+    document.getElementById('ratingDetails').style.display = 'none';
+  };
+
+  // Открытие существующей книги
+  window.openBook = function(id) {
+    const book = appData.books.find(b => b.id === id);
+    if (!book) return;
+    
+    currentBookId = id;
+    document.getElementById('modalTitle').textContent = book.title || 'Книга';
+    
+    // Заполнение полей
+    const fields = ['title', 'author', 'year', 'country', 'genre', 'timePeriod', 'characters', 'plot', 'impression', 'quotes'];
+    fields.forEach(f => {
+      const display = document.getElementById('display' + f.charAt(0).toUpperCase() + f.slice(1));
+      const value = book[f] || '';
+      display.textContent = value || 'Нажмите, чтобы добавить';
+      if (!value) display.classList.add('empty');
+      else display.classList.remove('empty');
+    });
+    
+    // Загрузка оценок
+    ratings = book.ratings || { style: 0, plot: 0, depth: 0, overall: 0 };
+    updateTotalRating();
+    renderStars();
+    
+    document.getElementById('bookModal').classList.add('active');
+    document.getElementById('ratingDetails').style.display = 'none';
+  };
+
+  // Закрытие модального окна
+  window.closeModal = function() {
+    document.getElementById('bookModal').classList.remove('active');
+    if (editingField) {
+      cancelEdit();
+    }
+    renderHomePage();
+    updateStats();
+  };
+
+  // Редактирование поля
+  window.editField = function(field) {
+    if (editingField) cancelEdit();
+    
+    const display = document.getElementById('display' + field.charAt(0).toUpperCase() + field.slice(1));
+    const currentValue = display.textContent === 'Нажмите, чтобы добавить' ? '' : display.textContent;
+    
+    const input = document.createElement(field === 'plot' || field === 'impression' || field === 'quotes' || field === 'characters' ? 'textarea' : 'input');
+    input.type = field === 'year' ? 'number' : 'text';
+    input.className = 'field-input';
+    input.value = currentValue;
+    input.id = 'editingInput';
+    
+    display.innerHTML = '';
+    display.appendChild(input);
+    input.focus();
+    
+    editingField = field;
+    
+    // Сохранение при потере фокуса
+    input.addEventListener('blur', () => saveField(field));
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && field !== 'plot' && field !== 'impression' && field !== 'quotes' && field !== 'characters') {
+        saveField(field);
+      }
+    });
+  };
+
+  function saveField(field) {
+    const input = document.getElementById('editingInput');
+    if (!input) return;
+    
+    const value = input.value.trim();
+    const display = document.getElementById('display' + field.charAt(0).toUpperCase() + field.slice(1));
+    
+    display.textContent = value || 'Нажмите, чтобы добавить';
+    if (!value) {
+      display.classList.add('empty');
+    } else {
+      display.classList.remove('empty');
+    }
+    
+    // Сохранение в текущую книгу
+    saveCurrentBook();
+    
+    editingField = null;
+  }
+
+  function cancelEdit() {
+    if (editingField) {
+      saveField(editingField);
+    }
+  }
+
+  // Сохранение текущей книги
+  function saveCurrentBook() {
+    const fields = ['title', 'author', 'year', 'country', 'genre', 'timePeriod', 'characters', 'plot', 'impression', 'quotes'];
+    const bookData = {};
+    
+    fields.forEach(f => {
+      const display = document.getElementById('display' + f.charAt(0).toUpperCase() + f.slice(1));
+      const value = display.textContent === 'Нажмите, чтобы добавить' ? '' : display.textContent;
+      bookData[f] = value;
+    });
+    
+    bookData.ratings = { ...ratings };
+    bookData.rating = ratings.style + ratings.plot + ratings.depth + ratings.overall;
+    
+    if (currentBookId) {
+      const index = appData.books.findIndex(b => b.id === currentBookId);
+      if (index !== -1) {
+        appData.books[index] = { ...appData.books[index], ...bookData };
+      }
+    } else if (bookData.title) {
+      bookData.id = Date.now() + '-' + Math.random().toString(36);
+      appData.books.push(bookData);
+      currentBookId = bookData.id;
+    }
+    
+    saveData();
+  }
+
+  // Система оценок
+  function initStars() {
+    const criteria = ['style', 'plot', 'depth', 'overall'];
+    criteria.forEach(c => {
+      const container = document.getElementById('stars' + c.charAt(0).toUpperCase() + c.slice(1));
+      renderStarsForCriteria(container, c);
+    });
+  }
+
+  function renderStars() {
+    const criteria = ['style', 'plot', 'depth', 'overall'];
+    criteria.forEach(c => {
+      const container = document.getElementById('stars' + c.charAt(0).toUpperCase() + c.slice(1));
+      renderStarsForCriteria(container, c);
+    });
+  }
+
+  function renderStarsForCriteria(container, criteria) {
+    container.innerHTML = '';
+    for (let i = 1; i <= 4; i++) {
+      const star = document.createElement('span');
+      star.className = 'star' + (i <= ratings[criteria] ? ' filled' : '');
+      star.textContent = '★';
+      star.onclick = () => setRating(criteria, i);
+      container.appendChild(star);
+    }
+  }
+
+  function setRating(criteria, value) {
+    ratings[criteria] = value;
+    renderStars();
+    updateTotalRating();
+    saveCurrentBook();
+  }
+
+  function updateTotalRating() {
+    const total = ratings.style + ratings.plot + ratings.depth + ratings.overall;
+    document.getElementById('totalRating').textContent = total;
+  }
+
+  window.toggleRatingDetails = function() {
+    const details = document.getElementById('ratingDetails');
+    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+  };
+
+  // Статистика
+  function updateStats() {
+    const books = appData.books;
+    document.getElementById('totalBooksStat').textContent = books.length;
+    
+    const totalRating = books.reduce((sum, b) => sum + (b.rating || 0), 0);
+    const avgRating = books.length > 0 ? (totalRating / books.length).toFixed(1) : 0;
+    document.getElementById('avgRatingStat').textContent = `${avgRating}/12`;
+    
+    // Счётчик стран и жанров
+    const countries = {};
+    const genres = {};
+    books.forEach(b => {
+      if (b.country) countries[b.country] = (countries[b.country] || 0) + 1;
+      if (b.genre) genres[b.genre] = (genres[b.genre] || 0) + 1;
+    });
+    
+    const topCountry = Object.entries(countries).sort((a, b) => b[1] - a[1])[0];
+    const topGenre = Object.entries(genres).sort((a, b) => b[1] - a[1])[0];
+    
+    document.getElementById('topCountryStat').textContent = topCountry ? topCountry[0] : '—';
+    document.getElementById('topGenreStat').textContent = topGenre ? topGenre[0] : '—';
+    
+    // По годам
+    const byYear = {};
+    books.forEach(b => {
+      if (b.year) {
+        byYear[b.year] = (byYear[b.year] || 0) + 1;
+      }
+    });
+    
+    const yearStats = document.getElementById('statsByYear');
+    yearStats.innerHTML = Object.entries(byYear)
+      .sort((a, b) => b[0] - a[0])
+      .map(([year, count]) => `
+        <div class="stat-row">
+          <span>📅 ${year}</span>
+          <span class="stat-value">${count} ${getBookWord(count)}</span>
+        </div>
+      `).join('');
+  }
+
+  // Экспорт/импорт
+  window.exportData = function() {
+    const dataStr = JSON.stringify(appData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `literary-diary-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  window.importData = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (imported.books) {
+            appData = imported;
+            saveData();
+            renderHomePage();
+            updateStats();
+            alert('✅ Данные успешно импортированы!');
+          }
+        } catch (err) {
+          alert('❌ Ошибка импорта файла');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  // Вспомогательные функции
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function getBookWord(count) {
+    if (count % 10 === 1 && count % 100 !== 11) return 'книга';
+    if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) return 'книги';
+    return 'книг';
+  }
+
+  // Запуск
+  init();
+})();
+</script>
+</body>
+</html>
