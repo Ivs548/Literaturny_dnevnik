@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Литературный дневник</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f3f0;
+      color: #2e2e2e;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 80px;
+    }
+
+    /* Уведомления */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4a3b2c;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 40px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      z-index: 1000;
+      max-width: 90%;
+      text-align: center;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .toast.success {
+      background: #2d5a3f;
+    }
+
+    /* Основные страницы */
+    .page {
+      display: none;
+      padding: 20px 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #4a3b2c 0%, #7f5e3a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 20px;
+    }
+
+    /* Плашки книг */
+    .books-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .book-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border: 1px solid #ede3d9;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .book-card:active {
+      transform: scale(0.98);
+      background: #fff;
+    }
+
+    .book-card-title {
+      font-size: 18px;
+      font-weight: 650;
+      color: #2e241b;
+      margin-bottom: 6px;
+    }
+
+    .book-card-author {
+      font-size: 15px;
+      color: #7b6e5d;
+    }
+
+    .book-card-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #9a8979;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #a3927e;
+      font-style: italic;
+      background: rgba(255,255,255,0.5);
+      border-radius: 20px;
+    }
+
+    /* Нижнее меню */
+    .bottom-menu {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(250, 245, 240, 0.95);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-top: 1px solid #e3d6ca;
+      padding: 8px 16px 20px;
+      display: flex;
+      justify-content: space-around;
+      z-index: 100;
+    }
+
+    .menu-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: none;
+      border: none;
+      color: #7f6e5c;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 30px;
+      transition: all 0.2s;
+    }
+
+    .menu-btn.active {
+      color: #634d37;
+      background: #e8dfd5;
+    }
+
+    .menu-btn .icon {
+      font-size: 24px;
+      margin-bottom: 2px;
+    }
+
+    /* Модальное окно книги — теперь красивая страница */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #f5f3f0;
+      z-index: 200;
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: block;
+    }
+
+    /* Шапка страницы книги */
+    .book-page-header {
+      position: sticky;
+      top: 0;
+      background: rgba(245, 243, 240, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 16px 20px;
+      border-bottom: 1px solid #e3d6ca;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .book-page-header h2 {
+      font-size: 20px;
+      font-weight: 650;
+      color: #3e3326;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #7f6e5c;
+      padding: 8px;
+    }
+
+    /* Контент страницы книги */
+    .book-page-content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px 20px 40px;
+    }
+
+    /* Обложка книги (декоративная) */
+    .book-cover-decoration {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .cover-placeholder {
+      width: 120px;
+      height: 160px;
+      background: linear-gradient(145deg, #d4c5b6, #c4b3a2);
+      border-radius: 12px;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+
+    /* Заголовок книги */
+    .book-title-display {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #2e241b;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .book-author-display {
+      font-size: 18px;
+      color: #7b6e5d;
+      text-align: center;
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    /* Мета-информация (год, страна, жанр) */
+    .book-meta-grid {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      text-align: center;
+    }
+
+    .meta-label {
+      font-size: 12px;
+      color: #a3927e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .meta-value {
+      font-size: 16px;
+      font-weight: 500;
+      color: #4f3e2d;
+    }
+
+    /* Блок оценки */
+    .rating-block {
+      background: #fffbf8;
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+
+    .rating-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .rating-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #4f3e2d;
+    }
+
+    .rating-total-big {
+      font-size: 36px;
+      font-weight: 700;
+      color: #6f5e4e;
+    }
+
+    .rating-max-big {
+      font-size: 18px;
+      color: #a3927e;
+      font-weight: 400;
+    }
+
+    .rating-criteria-list {
+      border-top: 1px solid #ede3d9;
+      padding-top: 20px;
+    }
+
+    .criteria-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .criteria-name {
+      font-size: 15px;
+      color: #5c4a36;
+    }
+
+    .criteria-stars {
+      display: flex;
+      gap: 8px;
+    }
+
+    .criteria-star {
+      font-size: 24px;
+      cursor: pointer;
+      color: #d4c4b6;
+      transition: color 0.2s;
+    }
+
+    .criteria-star.filled {
+      color: #f5b342;
+    }
+
+    /* Секции контента */
+    .content-section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 650;
+      color: #4f3e2d;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .icon {
+      font-size: 20px;
+    }
+
+    /* Поля ввода с подсказками внутри */
+    .book-field {
+      margin-bottom: 16px;
+    }
+
+    .book-input {
+      width: 100%;
+      background: #fffbf8;
+      border: 1px solid #e8dfd5;
+      border-radius: 16px;
+      padding: 16px 18px;
+      font-size: 16px;
+      font-family: inherit;
+      color: #2e241b;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .book-input:focus {
+      outline: none;
+      border-color: #b28b6d;
+      box-shadow: 0 0 0 3px rgba(178, 139, 109, 0.1);
+    }
+
+    .book-input::placeholder {
+      color: #b9aa99;
+      font-style: italic;
+    }
+
+    textarea.book-input {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    /* Текстовые блоки (некликабельные для героев, сюжета, впечатления, цитат) */
+    .static-text-block {
+      background: #fffbf8;
+      border-radius: 20px;
+      padding: 20px;
+      line-height: 1.6;
+      color: #3f352b;
+      border: 1px solid #ede3d9;
+      white-space: pre-wrap;
+      font-size: 15px;
+    }
+
+    .static-text-block p {
+      margin-bottom: 12px;
+    }
+
+    .static-text-block p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Кнопка удаления */
+    .delete-btn {
+      background: none;
+      border: 1px solid #d4bfb0;
+      color: #b88a7a;
+      padding: 14px 20px;
+      border-radius: 40px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: all 0.2s;
+    }
+
+    .delete-btn:active {
+      background: #f5e6e0;
+    }
+
+    /* Статистика */
+    .stats-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 17px;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      color: #4f3a27;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #3e3326;
+      margin-bottom: 16px;
+    }
+
+    /* Тёмная тема */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1f1b17;
+        color: #ede7df;
+      }
+      .modal {
+        background: #1f1b17;
+      }
+      .book-page-header {
+        background: rgba(30, 27, 24, 0.95);
+        border-color: #4a3e34;
+      }
+      .book-card {
+        background: rgba(40, 35, 30, 0.95);
+        border-color: #4a3e34;
+      }
+      .book-card-title { color: #f0e6db; }
+      .book-title-display { color: #f0e6db; }
+      .book-author-display { color: #b9aa99; }
+      .rating-block, .static-text-block, .book-input {
+        background: #2c2620;
+        border-color: #4a3e34;
+        color: #ede0d4;
+      }
+      .book-input::placeholder {
+        color: #8a7a6c;
+      }
+      .book-input:focus {
+        border-color: #c9aa8b;
+        box-shadow: 0 0 0 3px rgba(201, 170, 139, 0.1);
+      }
+      .meta-value { color: #d4c5b6; }
+      .section-title { color: #d4c5b6; }
+      .criteria-name { color: #c4b4a3; }
+      .bottom-menu {
+        background: rgba(30, 27, 24, 0.95);
+        border-color: #4a3e34;
+      }
+      .menu-btn.active {
+        background: #4a3e34;
+        color: #d4c5b6;
+      }
+      .stats-card {
+        background: rgba(40, 35, 30, 0.95);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- УВЕДОМЛЕНИЯ -->
+<div id="toastContainer"></div>
+
+<!-- ДОМАШНЯЯ СТРАНИЦА -->
+<div class="page active" id="homePage">
+  <h1>📚 Литературный<br>дневник</h1>
+  <div id="booksList" class="books-grid"></div>
+</div>
+
+<!-- СТРАНИЦА СТАТИСТИКИ -->
+<div class="page" id="statsPage">
+  <h1>📊 Статистика</h1>
+  <div class="stats-card">
+    <div class="stat-row"><span>📖 Всего книг</span><span class="stat-value" id="totalBooksStat">0</span></div>
+    <div class="stat-row"><span>⭐ Средняя оценка</span><span class="stat-value" id="avgRatingStat">0/12</span></div>
+    <div class="stat-row"><span>🌍 Любимая страна</span><span class="stat-value" id="topCountryStat">—</span></div>
+    <div class="stat-row"><span>📚 Любимый жанр</span><span class="stat-value" id="topGenreStat">—</span></div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО КНИГИ (КРАСИВАЯ СТРАНИЦА) -->
+<div class="modal" id="bookModal">
+  <div class="book-page-header">
+    <h2>📖 О книге</h2>
+    <button class="close-btn" onclick="closeModal()">✕</button>
+  </div>
+  
+  <div class="book-page-content">
+    <!-- Декоративная обложка -->
+    <div class="book-cover-decoration">
+      <div class="cover-placeholder" id="coverEmoji">📘</div>
+    </div>
+    
+    <!-- Название и автор -->
+    <div class="book-field">
+      <input type="text" class="book-input" id="bookTitleInput" placeholder="Название книги" style="font-size: 28px; font-weight: 700; text-align: center;">
+    </div>
+    <div class="book-field">
+      <input type="text" class="book-input" id="bookAuthorInput" placeholder="Автор" style="font-size: 18px; text-align: center; font-style: italic;">
+    </div>
+    
+    <!-- Мета-информация -->
+    <div class="book-meta-grid">
+      <div class="meta-item">
+        <div class="meta-label">Год</div>
+        <input type="text" class="book-input" id="bookYearInput" placeholder="Год" style="text-align: center; padding: 8px 12px; width: 100px;">
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Страна</div>
+        <input type="text" class="book-input" id="bookCountryInput" placeholder="Страна" style="text-align: center; padding: 8px 12px; width: 120px;">
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Жанр</div>
+        <input type="text" class="book-input" id="bookGenreInput" placeholder="Жанр" style="text-align: center; padding: 8px 12px; width: 120px;">
+      </div>
+    </div>
+    
+    <!-- Время в книге -->
+    <div class="book-field">
+      <input type="text" class="book-input" id="bookTimeInput" placeholder="Время в книге (например, XIX век)">
+    </div>
+    
+    <!-- Оценка -->
+    <div class="rating-block">
+      <div class="rating-header">
+        <span class="rating-label">Оценка</span>
+        <div>
+          <span class="rating-total-big" id="totalRatingDisplay">0</span>
+          <span class="rating-max-big">/12</span>
+        </div>
+      </div>
+      <div class="rating-criteria-list">
+        <div class="criteria-row">
+          <span class="criteria-name">Красота изложения</span>
+          <div class="criteria-stars" id="criteriaStyle"></div>
+        </div>
+        <div class="criteria-row">
+          <span class="criteria-name">Интересность сюжета</span>
+          <div class="criteria-stars" id="criteriaPlot"></div>
+        </div>
+        <div class="criteria-row">
+          <span class="criteria-name">Глубина мысли</span>
+          <div class="criteria-stars" id="criteriaDepth"></div>
+        </div>
+        <div class="criteria-row">
+          <span class="criteria-name">Общее впечатление</span>
+          <div class="criteria-stars" id="criteriaOverall"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Герои (НЕкликабельное поле) -->
+    <div class="content-section">
+      <div class="section-title">
+        <span class="icon">👥</span>
+        <span>Герои</span>
+      </div>
+      <div class="static-text-block" id="displayCharactersStatic"></div>
+    </div>
+    
+    <!-- Сюжет (НЕкликабельное поле) -->
+    <div class="content-section">
+      <div class="section-title">
+        <span class="icon">📜</span>
+        <span>Сюжет</span>
+      </div>
+      <div class="static-text-block" id="displayPlotStatic"></div>
+    </div>
+    
+    <!-- Впечатление (НЕкликабельное поле) -->
+    <div class="content-section">
+      <div class="section-title">
+        <span class="icon">💭</span>
+        <span>Моё впечатление</span>
+      </div>
+      <div class="static-text-block" id="displayImpressionStatic"></div>
+    </div>
+    
+    <!-- Цитаты (НЕкликабельное поле) -->
+    <div class="content-section">
+      <div class="section-title">
+        <span class="icon">❝</span>
+        <span>Цитаты</span>
+      </div>
+      <div class="static-text-block" id="displayQuotesStatic"></div>
+    </div>
+    
+    <!-- Кнопка удаления -->
+    <button class="delete-btn" id="deleteBookBtn" onclick="deleteCurrentBook()">🗑️ Удалить книгу</button>
+  </div>
+</div>
+
+<!-- НИЖНЕЕ МЕНЮ -->
+<div class="bottom-menu">
+  <button class="menu-btn active" id="menuHome" onclick="switchPage('home')">
+    <span class="icon">🏠</span>
+    <span>Главная</span>
+  </button>
+  <button class="menu-btn" id="menuStats" onclick="switchPage('stats')">
+    <span class="icon">📊</span>
+    <span>Статистика</span>
+  </button>
+  <button class="menu-btn" onclick="openNewBookModal()">
+    <span class="icon">➕</span>
+    <span>Добавить</span>
+  </button>
+  <button class="menu-btn" onclick="exportData()">
+    <span class="icon">📤</span>
+    <span>Экспорт</span>
+  </button>
+  <button class="menu-btn" onclick="importData()">
+    <span class="icon">📥</span>
+    <span>Импорт</span>
+  </button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Состояние приложения
+  let appData = {
+    books: []
+  };
+
+  let currentBookId = null;
+  let ratings = { style: 0, plot: 0, depth: 0, overall: 0 };
+
+  // Инициализация
+  function init() {
+    loadData();
+    renderHomePage();
+    updateStats();
+    initStars();
+    
+    // Автосохранение при вводе
+    const inputs = ['bookTitleInput', 'bookAuthorInput', 'bookYearInput', 'bookCountryInput', 'bookGenreInput', 'bookTimeInput'];
+    inputs.forEach(id => {
+      document.getElementById(id).addEventListener('input', saveCurrentBook);
+    });
+  }
+
+  // Загрузка из localStorage
+  function loadData() {
+    try {
+      const saved = localStorage.getItem('literaryDiaryV2');
+      if (saved) {
+        appData = JSON.parse(saved);
+        if (!appData.books) appData.books = [];
+      }
+    } catch (e) {
+      console.error('Ошибка загрузки:', e);
+    }
+  }
+
+  // Сохранение в localStorage
+  function saveData() {
+    try {
+      localStorage.setItem('literaryDiaryV2', JSON.stringify(appData));
+    } catch (e) {
+      console.error('Ошибка сохранения:', e);
+    }
+  }
+
+  // Показ уведомления
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
+
+  // Переключение страниц
+  window.switchPage = function(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page + 'Page').classList.add('active');
+    
+    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('menu' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active');
+    
+    if (page === 'stats') updateStats();
+    if (page === 'home') renderHomePage();
+  };
+
+  // Рендер главной страницы
+  function renderHomePage() {
+    const container = document.getElementById('booksList');
+    
+    if (appData.books.length === 0) {
+      container.innerHTML = '<div class="empty-state">📚 Нажмите "Добавить", чтобы создать первую запись о книге</div>';
+      return;
+    }
+    
+    container.innerHTML = appData.books.map(book => `
+      <div class="book-card" onclick="openBook('${book.id}')">
+        <div class="book-card-title">${escapeHtml(book.title || 'Без названия')}</div>
+        <div class="book-card-author">${escapeHtml(book.author || 'Автор не указан')}</div>
+        <div class="book-card-meta">
+          ${book.year ? `<span>📅 ${book.year}</span>` : ''}
+          ${book.country ? `<span>🌍 ${book.country}</span>` : ''}
+          ${book.genre ? `<span>📚 ${book.genre}</span>` : ''}
+          ${book.rating ? `<span>⭐ ${book.rating}/12</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Открытие новой книги
+  window.openNewBookModal = function() {
+    currentBookId = null;
+    
+    // Очистка полей
+    document.getElementById('bookTitleInput').value = '';
+    document.getElementById('bookAuthorInput').value = '';
+    document.getElementById('bookYearInput').value = '';
+    document.getElementById('bookCountryInput').value = '';
+    document.getElementById('bookGenreInput').value = '';
+    document.getElementById('bookTimeInput').value = '';
+    
+    document.getElementById('displayCharactersStatic').textContent = 'Информация о героях появится после редактирования';
+    document.getElementById('displayPlotStatic').textContent = 'Описание сюжета появится после редактирования';
+    document.getElementById('displayImpressionStatic').textContent = 'Ваше впечатление появится после редактирования';
+    document.getElementById('displayQuotesStatic').textContent = 'Цитаты появятся после редактирования';
+    
+    document.getElementById('coverEmoji').textContent = '📘';
+    
+    // Сброс оценок
+    ratings = { style: 0, plot: 0, depth: 0, overall: 0 };
+    updateTotalRating();
+    renderAllStars();
+    
+    document.getElementById('bookModal').classList.add('active');
+    document.getElementById('deleteBookBtn').style.display = 'none';
+  };
+
+  // Открытие существующей книги
+  window.openBook = function(id) {
+    const book = appData.books.find(b => b.id === id);
+    if (!book) return;
+    
+    currentBookId = id;
+    
+    // Заполнение полей
+    document.getElementById('bookTitleInput').value = book.title || '';
+    document.getElementById('bookAuthorInput').value = book.author || '';
+    document.getElementById('bookYearInput').value = book.year || '';
+    document.getElementById('bookCountryInput').value = book.country || '';
+    document.getElementById('bookGenreInput').value = book.genre || '';
+    document.getElementById('bookTimeInput').value = book.timePeriod || '';
+    
+    // Статические поля
+    document.getElementById('displayCharactersStatic').textContent = book.characters || 'Информация о героях появится после редактирования';
+    document.getElementById('displayPlotStatic').textContent = book.plot || 'Описание сюжета появится после редактирования';
+    document.getElementById('displayImpressionStatic').textContent = book.impression || 'Ваше впечатление появится после редактирования';
+    document.getElementById('displayQuotesStatic').textContent = book.quotes || 'Цитаты появятся после редактирования';
+    
+    document.getElementById('coverEmoji').textContent = book.coverEmoji || '📘';
+    
+    // Загрузка оценок
+    ratings = book.ratings || { style: 0, plot: 0, depth: 0, overall: 0 };
+    updateTotalRating();
+    renderAllStars();
+    
+    document.getElementById('bookModal').classList.add('active');
+    document.getElementById('deleteBookBtn').style.display = 'block';
+  };
+
+  // Закрытие модального окна
+  window.closeModal = function() {
+    saveCurrentBook();
+    document.getElementById('bookModal').classList.remove('active');
+    renderHomePage();
+    updateStats();
+  };
+
+  // Сохранение текущей книги
+  function saveCurrentBook() {
+    if (!currentBookId && !document.getElementById('bookTitleInput').value.trim()) {
+      return;
+    }
+    
+    const bookData = {
+      title: document.getElementById('bookTitleInput').value.trim(),
+      author: document.getElementById('bookAuthorInput').value.trim(),
+      year: document.getElementById('bookYearInput').value.trim(),
+      country: document.getElementById('bookCountryInput').value.trim(),
+      genre: document.getElementById('bookGenreInput').value.trim(),
+      timePeriod: document.getElementById('bookTimeInput').value.trim(),
+      characters: document.getElementById('displayCharactersStatic').textContent === 'Информация о героях появится после редактирования' ? '' : document.getElementById('displayCharactersStatic').textContent,
+      plot: document.getElementById('displayPlotStatic').textContent === 'Описание сюжета появится после редактирования' ? '' : document.getElementById('displayPlotStatic').textContent,
+      impression: document.getElementById('displayImpressionStatic').textContent === 'Ваше впечатление появится после редактирования' ? '' : document.getElementById('displayImpressionStatic').textContent,
+      quotes: document.getElementById('displayQuotesStatic').textContent === 'Цитаты появятся после редактирования' ? '' : document.getElementById('displayQuotesStatic').textContent,
+      ratings: { ...ratings },
+      rating: ratings.style + ratings.plot + ratings.depth + ratings.overall,
+      coverEmoji: document.getElementById('coverEmoji').textContent
+    };
+    
+    if (currentBookId) {
+      const index = appData.books.findIndex(b => b.id === currentBookId);
+      if (index !== -1) {
+        appData.books[index] = { ...appData.books[index], ...bookData };
+      }
+    } else if (bookData.title) {
+      bookData.id = Date.now() + '-' + Math.random().toString(36);
+      appData.books.push(bookData);
+      currentBookId = bookData.id;
+      document.getElementById('deleteBookBtn').style.display = 'block';
+    }
+    
+    saveData();
+  }
+
+  // Удаление книги
+  window.deleteCurrentBook = function() {
+    if (!currentBookId) return;
+    
+    if (confirm('Удалить эту книгу?')) {
+      appData.books = appData.books.filter(b => b.id !== currentBookId);
+      saveData();
+      closeModal();
+      showToast('🗑️ Книга удалена', 'success');
+    }
+  };
+
+  // Инициализация звёзд
+  function initStars() {
+    renderAllStars();
+  }
+
+  function renderAllStars() {
+    renderStarsForCriteria('criteriaStyle', 'style');
+    renderStarsForCriteria('criteriaPlot', 'plot');
+    renderStarsForCriteria('criteriaDepth', 'depth');
+    renderStarsForCriteria('criteriaOverall', 'overall');
+  }
+
+  function renderStarsForCriteria(containerId, criteria) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    for (let i = 1; i <= 4; i++) {
+      const star = document.createElement('span');
+      star.className = 'criteria-star' + (i <= ratings[criteria] ? ' filled' : '');
+      star.textContent = '★';
+      star.onclick = () => {
+        ratings[criteria] = i;
+        renderAllStars();
+        updateTotalRating();
+        saveCurrentBook();
+      };
+      container.appendChild(star);
+    }
+  }
+
+  function updateTotalRating() {
+    const total = ratings.style + ratings.plot + ratings.depth + ratings.overall;
+    document.getElementById('totalRatingDisplay').textContent = total;
+  }
+
+  // Обновление статистики
+  function updateStats() {
+    const books = appData.books;
+    document.getElementById('totalBooksStat').textContent = books.length;
+    
+    const totalRating = books.reduce((sum, b) => sum + (b.rating || 0), 0);
+    const avgRating = books.length > 0 ? (totalRating / books.length).toFixed(1) : 0;
+    document.getElementById('avgRatingStat').textContent = `${avgRating}/12`;
+    
+    // Страны и жанры
+    const countries = {}, genres = {};
+    books.forEach(b => {
+      if (b.country) countries[b.country] = (countries[b.country] || 0) + 1;
+      if (b.genre) genres[b.genre] = (genres[b.genre] || 0) + 1;
+    });
+    
+    const topCountry = Object.entries(countries).sort((a, b) => b[1] - a[1])[0];
+    const topGenre = Object.entries(genres).sort((a, b) => b[1] - a[1])[0];
+    
+    document.getElementById('topCountryStat').textContent = topCountry ? topCountry[0] : '—';
+    document.getElementById('topGenreStat').textContent = topGenre ? topGenre[0] : '—';
+  }
+
+  // Экспорт данных с сохранением в указанную папку
+  window.exportData = function() {
+    const dataStr = JSON.stringify(appData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    
+    // Создаём ссылку для скачивания
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    
+    // Имя файла с датой
+    const date = new Date();
+    const fileName = `Лит_дневник_${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}.json`;
+    
+    // Пытаемся указать путь (работает не во всех браузерах, но в современных — да)
+    a.download = fileName;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    
+    // Показываем подробную инструкцию
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      showToast('📱 Файл сохранён в Файлы → Загрузки', 'success');
+    } else {
+      showToast('💾 Файл сохранён в папку Загрузки', 'success');
+    }
+  };
+
+  // Импорт данных
+  window.importData = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (imported.books && Array.isArray(imported.books)) {
+            appData = imported;
+            saveData();
+            renderHomePage();
+            updateStats();
+            showToast('✅ Данные импортированы!', 'success');
+          } else {
+            showToast('❌ Неверный формат файла', 'info');
+          }
+        } catch (err) {
+          showToast('❌ Ошибка чтения файла', 'info');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  // Вспомогательные функции
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Запуск
+  init();
+})();
+</script>
+</body>
+</html>
