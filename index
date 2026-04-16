@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>📚 Литературный дневник</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f3f0;
+      min-height: 100vh;
+      padding: 20px 16px 32px;
+      color: #2e2e2e;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 30px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #4a3b2c 0%, #7f5e3a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin: 0;
+    }
+
+    .stats-badge {
+      background: rgba(255, 245, 235, 0.8);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      padding: 6px 12px;
+      border-radius: 40px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #5c4a36;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      border: 1px solid rgba(200, 170, 140, 0.2);
+    }
+
+    section {
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #3e3326;
+      letter-spacing: -0.3px;
+    }
+
+    .count-badge {
+      background: #e6ddd2;
+      color: #4f3f2e;
+      padding: 4px 10px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .book-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .book-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 24px;
+      padding: 16px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+      border: 1px solid #f0e7de;
+      transition: transform 0.2s ease;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .book-card:active {
+      transform: scale(0.98);
+    }
+
+    .book-cover {
+      width: 60px;
+      height: 80px;
+      background: linear-gradient(145deg, #f1ebe4, #e3d9cf);
+      border-radius: 10px;
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b5843;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+
+    .book-info {
+      flex: 1;
+    }
+
+    .book-title {
+      font-weight: 650;
+      font-size: 17px;
+      line-height: 1.3;
+      color: #2e241b;
+      margin-bottom: 4px;
+    }
+
+    .book-author {
+      font-size: 14px;
+      color: #7b6e5d;
+      margin-bottom: 8px;
+    }
+
+    .progress-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar-bg {
+      flex: 1;
+      height: 6px;
+      background: #e5dbd0;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 6px;
+      background: #b28b6d;
+      border-radius: 20px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b5843;
+      min-width: 45px;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      color: #c4b4a3;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:active {
+      color: #d9534f;
+    }
+
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .note-card {
+      background: #fffbf8;
+      border-radius: 20px;
+      padding: 16px;
+      border-left: 6px solid #b28b6d;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.02);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .note-card:active {
+      opacity: 0.8;
+    }
+
+    .note-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      padding-right: 30px;
+    }
+
+    .note-book {
+      font-weight: 600;
+      color: #4f3a27;
+    }
+
+    .note-date {
+      font-size: 12px;
+      color: #a3927e;
+    }
+
+    .note-quote {
+      font-style: italic;
+      color: #4e4032;
+      margin: 6px 0 4px;
+      padding-left: 6px;
+      border-left: 2px solid #cfbba8;
+    }
+
+    .note-text {
+      font-size: 14px;
+      line-height: 1.45;
+      color: #3f352b;
+    }
+
+    .note-delete {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #c4b4a3;
+      padding: 4px;
+    }
+
+    .note-delete:active {
+      color: #d9534f;
+    }
+
+    .fab-add {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #6f5e4e;
+      color: white;
+      border: none;
+      border-radius: 60px;
+      padding: 14px 24px;
+      font-size: 18px;
+      font-weight: 500;
+      box-shadow: 0 8px 20px rgba(90, 70, 50, 0.2);
+      margin: 16px auto 0;
+      width: fit-content;
+      transition: 0.15s;
+      cursor: pointer;
+      border: 1px solid #8f7a64;
+      gap: 6px;
+    }
+
+    .fab-add:active {
+      opacity: 0.8;
+      transform: scale(0.98);
+    }
+
+    .stats-container {
+      background: #e8dfd5;
+      border-radius: 28px;
+      padding: 18px 20px;
+      margin-top: 6px;
+      box-shadow: inset 0 1px 3px rgba(255,255,255,0.8), 0 4px 8px rgba(0,0,0,0.02);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .stat-label {
+      color: #4f3e2d;
+      font-weight: 500;
+    }
+
+    .stat-number {
+      font-weight: 700;
+      color: #2b1f14;
+    }
+
+    .quote-of-day {
+      margin-top: 14px;
+      font-style: italic;
+      padding: 10px 0 0;
+      border-top: 1px dashed #bcab9a;
+      color: #5d4b37;
+    }
+
+    .tab-bar {
+      display: flex;
+      justify-content: space-around;
+      background: rgba(250, 245, 240, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 10px 6px;
+      border-radius: 40px;
+      margin-top: 24px;
+      border: 1px solid #e3d6ca;
+    }
+
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #7f6e5c;
+      font-size: 12px;
+      transition: 0.1s;
+      opacity: 0.8;
+      cursor: pointer;
+    }
+
+    .tab-item.active {
+      color: #634d37;
+      font-weight: 500;
+      opacity: 1;
+    }
+
+    .tab-icon {
+      font-size: 22px;
+      margin-bottom: 2px;
+    }
+
+    .reset-btn {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .reset-link {
+      color: #a3927e;
+      font-size: 13px;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: #a3927e;
+      font-style: italic;
+    }
+
+    .edit-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .edit-btn {
+      background: #e8dfd5;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #5c4a36;
+      cursor: pointer;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1f1b17;
+        color: #ede7df;
+      }
+      .book-card, .note-card {
+        background: rgba(40, 35, 30, 0.9);
+        border-color: #3f362c;
+      }
+      .book-title { color: #f0e6db; }
+      .book-author { color: #b9aa99; }
+      .progress-bar-bg { background: #3d3228; }
+      .progress-bar-fill { background: #c9aa8b; }
+      .stats-container { background: #2c2620; }
+      .stat-label, .note-date { color: #bbaa99; }
+      .tab-bar { background: #2a241ee0; border-color:#4e4136; }
+      .fab-add { background: #7d6854; }
+      h1 { background: linear-gradient(135deg, #e6d7c4, #ccb59b); -webkit-background-clip: text; background-clip: text; }
+      .note-card { background: #2c2620; }
+      .edit-btn { background: #3d3228; color: #d4c5b6; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <h1>📖 Литературный<br>дневник</h1>
+    <div class="stats-badge" id="streakBadge">📊 0 дней</div>
+  </div>
+
+  <section>
+    <div class="section-header">
+      <h2>📌 Сейчас читаю</h2>
+      <span class="count-badge" id="currentlyReadingCount">0 книг</span>
+    </div>
+    <div class="book-grid" id="currentlyReadingGrid"></div>
+  </section>
+
+  <section>
+    <div class="section-header">
+      <h2>✅ Прочитано</h2>
+      <span class="count-badge" id="readCount">0 книг</span>
+    </div>
+    <div class="book-grid" id="readGrid"></div>
+  </section>
+
+  <section>
+    <div class="section-header">
+      <h2>✍️ Заметки & цитаты</h2>
+      <span class="count-badge" id="notesCount">0 записей</span>
+    </div>
+    <div class="notes-list" id="notesList"></div>
+  </section>
+
+  <section>
+    <div class="stats-container">
+      <div class="stat-row">
+        <span class="stat-label">📚 Книг в этом году</span>
+        <span class="stat-number" id="totalBooksYear">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">⏳ Дней чтения подряд</span>
+        <span class="stat-number" id="streakDays">0 🔥</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">📑 Всего заметок</span>
+        <span class="stat-number" id="totalNotes">0</span>
+      </div>
+      <div class="quote-of-day" id="dailyQuote">
+        «Чтение — вот лучшее учение» — А.С. Пушкин
+      </div>
+    </div>
+  </section>
+
+  <button class="fab-add" id="addEntryBtn">
+    <span style="font-size:22px;">✏️</span> Новая запись
+  </button>
+
+  <div class="tab-bar">
+    <div class="tab-item active" data-tab="diary">
+      <span class="tab-icon">📚</span>
+      <span>Дневник</span>
+    </div>
+    <div class="tab-item" data-tab="stats">
+      <span class="tab-icon">📊</span>
+      <span>Статистика</span>
+    </div>
+    <div class="tab-item" data-tab="export">
+      <span class="tab-icon">📤</span>
+      <span>Экспорт</span>
+    </div>
+  </div>
+
+  <div class="reset-btn">
+    <button class="reset-link" id="resetAllBtn">Сбросить все данные</button>
+  </div>
+  
+  <p style="text-align:center; margin-top: 16px; color:#988f84; font-size:12px;">📱 Данные сохраняются на устройстве</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ----------
+  let appData = {
+    currentlyReading: [],
+    read: [],
+    notes: [],
+    streak: 0,
+    lastReadDate: null
+  };
+
+  // Цитаты для ежедневной смены
+  const quotes = [
+    '«Чтение — вот лучшее учение» — А.С. Пушкин',
+    '«Книга — это сосуд, который нас наполняет, но сам не пустеет» — А. Декурсель',
+    '«Люди делятся на две категории: на тех, кто читает книги, и тех, кто слушает тех, кто читает» — В. Гюго',
+    '«Читая авторов, которые хорошо пишут, привыкаешь хорошо говорить» — Вольтер',
+    '«Хорошая книга — это подарок, завещанный автором человеческому роду» — Д. Аддисон'
+  ];
+
+  // ---------- ЗАГРУЗКА И СОХРАНЕНИЕ В LOCALSTORAGE ----------
+  function loadData() {
+    const saved = localStorage.getItem('literaryDiary');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        appData = { ...appData, ...parsed };
+        
+        // Убедимся, что все массивы существуют
+        if (!appData.currentlyReading) appData.currentlyReading = [];
+        if (!appData.read) appData.read = [];
+        if (!appData.notes) appData.notes = [];
+        if (!appData.streak) appData.streak = 0;
+        
+      } catch (e) {
+        console.error('Ошибка загрузки данных:', e);
+        initializeDefaultData();
+      }
+    } else {
+      initializeDefaultData();
+    }
+    
+    // Проверяем стрик (дни чтения подряд)
+    updateStreak();
+    renderAll();
+  }
+
+  function saveData() {
+    localStorage.setItem('literaryDiary', JSON.stringify(appData));
+  }
+
+  function initializeDefaultData() {
+    // Демо-данные для первого запуска
+    const today = new Date().toISOString().split('T')[0];
+    
+    appData.currentlyReading = [
+      { id: '1', title: 'Сад расходящихся тропок', author: 'Х. Л. Борхес', progress: 64, cover: '🌿', dateAdded: today },
+      { id: '2', title: 'Старик и море', author: 'Эрнест Хемингуэй', progress: 32, cover: '🌊', dateAdded: today }
+    ];
+    
+    appData.read = [
+      { id: '3', title: 'Стрелок', author: 'Стивен Кинг', cover: '🏹', dateFinished: today, rating: 4.5 }
+    ];
+    
+    appData.notes = [
+      { id: 'n1', bookTitle: 'Сад расходящихся тропок', quote: 'В любом лабиринте можно заблудиться, но в лабиринте времени…', text: 'Борхес напоминает о множественности путей. Великолепная метафора чтения.', date: today },
+      { id: 'n2', bookTitle: 'Старик и море', quote: 'Человек не для того создан, чтобы терпеть поражения.', text: 'Потрясающая сцена с рыбой. Надо перечитать финал.', date: today },
+      { id: 'n3', bookTitle: 'Стрелок', text: 'Начало Тёмной Башни — суровый мир. Интересно, куда приведёт погоня.', date: today }
+    ];
+    
+    appData.streak = 3;
+    appData.lastReadDate = today;
+    
+    saveData();
+  }
+
+  function updateStreak() {
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!appData.lastReadDate) {
+      appData.lastReadDate = today;
+      appData.streak = 1;
+    } else if (appData.lastReadDate !== today) {
+      const lastDate = new Date(appData.lastReadDate);
+      const currentDate = new Date(today);
+      const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        // Продолжаем стрик
+        appData.streak += 1;
+      } else if (diffDays > 1) {
+        // Стрик прерван
+        appData.streak = 1;
+      }
+      // Если diffDays === 0, ничего не меняем
+      
+      appData.lastReadDate = today;
+    }
+    
+    saveData();
+  }
+
+  // ---------- ГЕНЕРАЦИЯ ID ----------
+  function generateId() {
+    return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  }
+
+  // ---------- РЕНДЕРИНГ ВСЕГО ИНТЕРФЕЙСА ----------
+  function renderAll() {
+    renderCurrentlyReading();
+    renderRead();
+    renderNotes();
+    renderStats();
+    updateAllCounters();
+  }
+
+  function renderCurrentlyReading() {
+    const grid = document.getElementById('currentlyReadingGrid');
+    
+    if (appData.currentlyReading.length === 0) {
+      grid.innerHTML = '<div class="empty-state">📚 Добавьте книгу, которую читаете</div>';
+      return;
+    }
+    
+    grid.innerHTML = appData.currentlyReading.map(book => `
+      <div class="book-card" data-id="${book.id}" data-type="currentlyReading">
+        <div class="book-cover">${book.cover || '📘'}</div>
+        <div class="book-info">
+          <div class="book-title">${escapeHtml(book.title)}</div>
+          <div class="book-author">${escapeHtml(book.author)}</div>
+          <div class="progress-area">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: ${book.progress}%;"></div>
+            </div>
+            <span class="progress-text">${book.progress}%</span>
+          </div>
+          <div class="edit-buttons">
+            <button class="edit-btn update-progress-btn" data-id="${book.id}">📊 Прогресс</button>
+            <button class="edit-btn move-to-read-btn" data-id="${book.id}">✅ Прочитал</button>
+          </div>
+        </div>
+        <button class="delete-btn" data-id="${book.id}" data-type="currentlyReading">🗑️</button>
+      </div>
+    `).join('');
+    
+    attachBookEvents();
+  }
+
+  function renderRead() {
+    const grid = document.getElementById('readGrid');
+    
+    if (appData.read.length === 0) {
+      grid.innerHTML = '<div class="empty-state">✅ Здесь появятся прочитанные книги</div>';
+      return;
+    }
+    
+    grid.innerHTML = appData.read.map(book => `
+      <div class="book-card" data-id="${book.id}" data-type="read">
+        <div class="book-cover">${book.cover || '📗'}</div>
+        <div class="book-info">
+          <div class="book-title">${escapeHtml(book.title)}</div>
+          <div class="book-author">${escapeHtml(book.author)}</div>
+          <div style="color:#6b5d4e; font-size:13px; margin-top:6px;">
+            ⭐ ${book.rating || '—'} · ${formatDate(book.dateFinished)}
+          </div>
+        </div>
+        <button class="delete-btn" data-id="${book.id}" data-type="read">🗑️</button>
+      </div>
+    `).join('');
+    
+    attachBookEvents();
+  }
+
+  function renderNotes() {
+    const container = document.getElementById('notesList');
+    
+    if (appData.notes.length === 0) {
+      container.innerHTML = '<div class="empty-state">✍️ Добавьте заметку или цитату</div>';
+      return;
+    }
+    
+    // Сортируем заметки по дате (новые сверху)
+    const sortedNotes = [...appData.notes].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    
+    container.innerHTML = sortedNotes.map(note => `
+      <div class="note-card" data-id="${note.id}">
+        <div class="note-header">
+          <span class="note-book">📘 ${escapeHtml(note.bookTitle)}</span>
+          <span class="note-date">${formatDate(note.date)}</span>
+        </div>
+        ${note.quote ? `<div class="note-quote">„${escapeHtml(note.quote)}“</div>` : ''}
+        <div class="note-text">${escapeHtml(note.text)}</div>
+        <button class="note-delete" data-id="${note.id}">✕</button>
+      </div>
+    `).join('');
+    
+    attachNotesEvents();
+  }
+
+  function renderStats() {
+    const totalBooks = appData.currentlyReading.length + appData.read.length;
+    document.getElementById('totalBooksYear').textContent = totalBooks;
+    document.getElementById('streakDays').textContent = `${appData.streak} 🔥`;
+    document.getElementById('totalNotes').textContent = appData.notes.length;
+    document.getElementById('streakBadge').textContent = `📊 ${appData.streak} дней`;
+    
+    // Случайная цитата
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    document.getElementById('dailyQuote').textContent = randomQuote;
+  }
+
+  function updateAllCounters() {
+    document.getElementById('currentlyReadingCount').textContent = 
+      `${appData.currentlyReading.length} ${getBookWord(appData.currentlyReading.length)}`;
+    document.getElementById('readCount').textContent = 
+      `${appData.read.length} ${getBookWord(appData.read.length)}`;
+    document.getElementById('notesCount').textContent = 
+      `${appData.notes.length} ${getNoteWord(appData.notes.length)}`;
+  }
+
+  function getBookWord(count) {
+    if (count % 10 === 1 && count % 100 !== 11) return 'книга';
+    if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) return 'книги';
+    return 'книг';
+  }
+
+  function getNoteWord(count) {
+    if (count % 10 === 1 && count % 100 !== 11) return 'запись';
+    if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) return 'записи';
+    return 'записей';
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return 'недавно';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ---------- ОБРАБОТЧИКИ СОБЫТИЙ ----------
+  function attachBookEvents() {
+    // Удаление книг
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const type = btn.dataset.type;
+        
+        if (type === 'currentlyReading') {
+          appData.currentlyReading = appData.currentlyReading.filter(b => b.id !== id);
+        } else if (type === 'read') {
+          appData.read = appData.read.filter(b => b.id !== id);
+        }
+        
+        saveData();
+        renderAll();
+      });
+    });
+    
+    // Обновление прогресса
+    document.querySelectorAll('.update-progress-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const book = appData.currentlyReading.find(b => b.id === id);
+        if (!book) return;
+        
+        const newProgress = prompt(`Введите прогресс для "${book.title}" (0-100):`, book.progress);
+        if (newProgress !== null) {
+          const progress = Math.min(100, Math.max(0, parseInt(newProgress) || 0));
+          book.progress = progress;
+          
+          // Обновляем дату чтения для стрика
+          updateStreak();
+          
+          saveData();
+          renderAll();
+        }
+      });
+    });
+    
+    // Перемещение в "прочитано"
+    document.querySelectorAll('.move-to-read-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const bookIndex = appData.currentlyReading.findIndex(b => b.id === id);
+        if (bookIndex === -1) return;
+        
+        const book = appData.currentlyReading[bookIndex];
+        const rating = prompt(`Оцените книгу "${book.title}" (1-5):`, '5');
+        
+        const finishedBook = {
+          ...book,
+          id: generateId(),
+          dateFinished: new Date().toISOString().split('T')[0],
+          rating: rating ? parseFloat(rating) : null,
+          progress: undefined
+        };
+        
+        appData.read.push(finishedBook);
+        appData.currentlyReading.splice(bookIndex, 1);
+        
+        updateStreak();
+        saveData();
+        renderAll();
+      });
+    });
+    
+    // Клик по карточке книги
+    document.querySelectorAll('.book-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        const title = card.querySelector('.book-title')?.textContent || 'Книга';
+        alert(`📚 ${title}\nПодробная информация о книге будет доступна в полной версии приложения.`);
+      });
+    });
+  }
+
+  function attachNotesEvents() {
+    // Удаление заметок
+    document.querySelectorAll('.note-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        appData.notes = appData.notes.filter(n => n.id !== id);
+        saveData();
+        renderAll();
+      });
+    });
+    
+    // Клик по заметке
+    document.querySelectorAll('.note-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.classList.contains('note-delete')) return;
+        const bookTitle = card.querySelector('.note-book')?.textContent || '';
+        alert(`📝 Заметка к книге ${bookTitle}\nПолный текст заметки можно редактировать.`);
+      });
+    });
+  }
+
+  // ---------- ДОБАВЛЕНИЕ НОВЫХ ЗАПИСЕЙ ----------
+  function showAddDialog() {
+    const type = prompt('Что хотите добавить?\n1 - Книгу в "Сейчас читаю"\n2 - Заметку/цитату\n3 - Книгу в "Прочитано"', '1');
+    
+    if (type === '1') {
+      addCurrentlyReadingBook();
+    } else if (type === '2') {
+      addNote();
+    } else if (type === '3') {
+      addReadBook();
+    }
+  }
+
+  function addCurrentlyReadingBook() {
+    const title = prompt('Название книги:');
+    if (!title) return;
+    
+    const author = prompt('Автор:', 'Неизвестен');
+    const progress = parseInt(prompt('Прогресс (%):', '0')) || 0;
+    const cover = prompt('Эмодзи для обложки (например 📘):', '📘');
+    
+    const newBook = {
+      id: generateId(),
+      title: title,
+      author: author || 'Неизвестен',
+      progress: Math.min(100, Math.max(0, progress)),
+      cover: cover || '📘',
+      dateAdded: new Date().toISOString().split('T')[0]
+    };
+    
+    appData.currentlyReading.push(newBook);
+    updateStreak();
+    saveData();
+    renderAll();
+  }
+
+  function addReadBook() {
+    const title = prompt('Название прочитанной книги:');
+    if (!title) return;
+    
+    const author = prompt('Автор:', 'Неизвестен');
+    const rating = parseFloat(prompt('Оценка (1-5):', '5')) || null;
+    const cover = prompt('Эмодзи для обложки:', '📗');
+    
+    const newBook = {
+      id: generateId(),
+      title: title,
+      author: author || 'Неизвестен',
+      cover: cover || '📗',
+      dateFinished: new Date().toISOString().split('T')[0],
+      rating: rating
+    };
+    
+    appData.read.push(newBook);
+    updateStreak();
+    saveData();
+    renderAll();
+  }
+
+  function addNote() {
+    const bookTitle = prompt('К какой книге заметка?');
+    if (!bookTitle) return;
+    
+    const quote = prompt('Цитата (необязательно):');
+    const text = prompt('Текст заметки:');
+    if (!text) return;
+    
+    const newNote = {
+      id: generateId(),
+      bookTitle: bookTitle,
+      quote: quote || null,
+      text: text,
+      date: new Date().toISOString().split('T')[0]
+    };
+    
+    appData.notes.push(newNote);
+    updateStreak();
+    saveData();
+    renderAll();
+  }
+
+  function resetAllData() {
+    if (confirm('Вы уверены? Все данные будут удалены безвозвратно.')) {
+      localStorage.removeItem('literaryDiary');
+      initializeDefaultData();
+      renderAll();
+    }
+  }
+
+  function exportData() {
+    const dataStr = JSON.stringify(appData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `literary-diary-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+  function init() {
+    loadData();
+    
+    document.getElementById('addEntryBtn').addEventListener('click', showAddDialog);
+    document.getElementById('resetAllBtn').addEventListener('click', resetAllData);
+    
+    // Обработчики вкладок
+    document.querySelectorAll('.tab-item').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        if (tabName === 'stats') {
+          alert(`📊 Статистика чтения:\n\n📚 Всего книг: ${appData.currentlyReading.length + appData.read.length}\n📖 Читается: ${appData.currentlyReading.length}\n✅ Прочитано: ${appData.read.length}\n📝 Заметок: ${appData.notes.length}\n🔥 Дней подряд: ${appData.streak}`);
+        } else if (tabName === 'export') {
+          exportData();
+        }
+      });
+    });
+    
+    // Обновление стрика при открытии
+    setInterval(() => {
+      // Проверка каждый час (для демонстрации)
+      const today = new Date().toISOString().split('T')[0];
+      if (appData.lastReadDate !== today) {
+        updateStreak();
+        renderStats();
+      }
+    }, 3600000);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
