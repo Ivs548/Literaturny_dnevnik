@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Литературный дневник</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f3f0;
+      color: #2e2e2e;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 80px;
+    }
+
+    /* Уведомления */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4a3b2c;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 40px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      z-index: 1000;
+      max-width: 90%;
+      text-align: center;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .toast.success { background: #2d5a3f; }
+
+    /* Основные страницы */
+    .page {
+      display: none;
+      padding: 20px 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .page.active { display: block; }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #4a3b2c 0%, #7f5e3a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 20px;
+    }
+
+    /* Плашки книг */
+    .books-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .book-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border: 1px solid #ede3d9;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .book-card:active {
+      transform: scale(0.98);
+      background: #fff;
+    }
+
+    .book-card-title {
+      font-size: 18px;
+      font-weight: 650;
+      color: #2e241b;
+      margin-bottom: 6px;
+    }
+
+    .book-card-author {
+      font-size: 15px;
+      color: #7b6e5d;
+    }
+
+    .book-card-meta {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #9a8979;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #a3927e;
+      font-style: italic;
+      background: rgba(255,255,255,0.5);
+      border-radius: 20px;
+    }
+
+    /* Нижнее меню */
+    .bottom-menu {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(250, 245, 240, 0.95);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-top: 1px solid #e3d6ca;
+      padding: 8px 16px 20px;
+      display: flex;
+      justify-content: space-around;
+      z-index: 100;
+    }
+
+    .menu-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: none;
+      border: none;
+      color: #7f6e5c;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 30px;
+      transition: all 0.2s;
+    }
+
+    .menu-btn.active {
+      color: #634d37;
+      background: #e8dfd5;
+    }
+
+    .menu-btn .icon {
+      font-size: 24px;
+      margin-bottom: 2px;
+    }
+
+    /* Модальное окно книги */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #f5f3f0;
+      z-index: 200;
+      overflow-y: auto;
+    }
+
+    .modal.active { display: block; }
+
+    /* Шапка страницы книги */
+    .book-page-header {
+      position: sticky;
+      top: 0;
+      background: rgba(245, 243, 240, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      border-bottom: 1px solid #e3d6ca;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .book-page-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #3e3326;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #7f6e5c;
+      padding: 8px;
+    }
+
+    /* Контент страницы книги */
+    .book-page-content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 12px 16px 40px;
+    }
+
+    /* Заголовок с названием и оценкой */
+    .book-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .book-title-wrapper {
+      flex: 1;
+    }
+
+    .book-title-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 26px;
+      font-weight: 700;
+      color: #2e241b;
+      padding: 8px 0;
+      font-family: inherit;
+    }
+
+    .book-title-input::placeholder {
+      color: #b9aa99;
+      font-weight: 400;
+    }
+
+    .book-title-input:focus {
+      outline: none;
+    }
+
+    /* Оценка в правом верхнем углу */
+    .rating-corner {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .rating-badge {
+      background: #e8dfd5;
+      border-radius: 40px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-align: center;
+    }
+
+    .rating-badge:active {
+      background: #d4c5b6;
+    }
+
+    .rating-number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #4f3e2d;
+      line-height: 1;
+    }
+
+    .rating-max-small {
+      font-size: 12px;
+      color: #8a7a6c;
+      margin-left: 2px;
+    }
+
+    /* Выпадающее меню оценки */
+    .rating-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background: #fffbf8;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      min-width: 240px;
+      z-index: 50;
+      display: none;
+      border: 1px solid #e8dfd5;
+    }
+
+    .rating-dropdown.active {
+      display: block;
+    }
+
+    .rating-criteria-item {
+      margin-bottom: 14px;
+    }
+
+    .rating-criteria-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .criteria-name {
+      font-size: 13px;
+      color: #6b5d4e;
+      margin-bottom: 6px;
+    }
+
+    .criteria-stars {
+      display: flex;
+      gap: 8px;
+    }
+
+    .criteria-star {
+      font-size: 24px;
+      cursor: pointer;
+      color: #d4c4b6;
+      transition: color 0.2s;
+    }
+
+    .criteria-star.filled {
+      color: #f5b342;
+    }
+
+    /* Поля ввода */
+    .book-field {
+      margin-bottom: 4px;
+    }
+
+    .book-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      padding: 8px 0;
+      font-size: 16px;
+      font-family: inherit;
+      color: #2e241b;
+    }
+
+    .book-input:focus {
+      outline: none;
+    }
+
+    .book-input::placeholder {
+      color: #b9aa99;
+    }
+
+    /* Автор */
+    .author-input {
+      font-size: 16px;
+      font-style: italic;
+      color: #6b5d4e;
+    }
+
+    .author-input::placeholder {
+      font-style: italic;
+    }
+
+    /* Мета-информация в строку — равномерно по ширине */
+    .meta-row {
+      display: flex;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .meta-input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      background: transparent;
+      padding: 8px 0;
+      font-size: 14px;
+      font-family: inherit;
+      color: #6b5d4e;
+    }
+
+    .meta-input:focus {
+      outline: none;
+    }
+
+    .meta-input::placeholder {
+      color: #b9aa99;
+    }
+
+    /* Динамичные textarea */
+    .dynamic-textarea {
+      width: 100%;
+      border: none;
+      background: transparent;
+      padding: 8px 0;
+      font-size: 16px;
+      font-family: inherit;
+      color: #2e241b;
+      resize: none;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    .dynamic-textarea:focus {
+      outline: none;
+    }
+
+    .dynamic-textarea::placeholder {
+      color: #b9aa99;
+    }
+
+    /* Разделители */
+    .section-divider {
+      height: 1px;
+      background: #e8dfd5;
+      margin: 8px 0;
+    }
+
+    /* Статистика */
+    .stats-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 17px;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      color: #4f3a27;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #3e3326;
+      margin-bottom: 16px;
+    }
+
+    /* Тёмная тема */
+    @media (prefers-color-scheme: dark) {
+      body { background: #1f1b17; color: #ede7df; }
+      .modal { background: #1f1b17; }
+      .book-page-header {
+        background: rgba(30, 27, 24, 0.95);
+        border-color: #4a3e34;
+      }
+      .book-card {
+        background: rgba(40, 35, 30, 0.95);
+        border-color: #4a3e34;
+      }
+      .book-card-title { color: #f0e6db; }
+      .book-title-input { color: #f0e6db; }
+      .author-input { color: #b9aa99; }
+      .book-input, .meta-input, .dynamic-textarea { color: #ede0d4; }
+      .book-input::placeholder, .meta-input::placeholder, .dynamic-textarea::placeholder { color: #8a7a6c; }
+      .rating-badge { background: #3d342c; }
+      .rating-number { color: #d4c5b6; }
+      .rating-dropdown {
+        background: #2c2620;
+        border-color: #4a3e34;
+      }
+      .criteria-name { color: #c4b4a3; }
+      .section-divider { background: #3d342c; }
+      .bottom-menu {
+        background: rgba(30, 27, 24, 0.95);
+        border-color: #4a3e34;
+      }
+      .menu-btn.active {
+        background: #4a3e34;
+        color: #d4c5b6;
+      }
+      .stats-card {
+        background: rgba(40, 35, 30, 0.95);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toastContainer"></div>
+
+<!-- ДОМАШНЯЯ СТРАНИЦА -->
+<div class="page active" id="homePage">
+  <h1>📚 Литературный<br>дневник</h1>
+  <div id="booksList" class="books-grid"></div>
+</div>
+
+<!-- СТРАНИЦА СТАТИСТИКИ -->
+<div class="page" id="statsPage">
+  <h1>📊 Статистика</h1>
+  <div class="stats-card">
+    <div class="stat-row"><span>📖 Всего книг</span><span class="stat-value" id="totalBooksStat">0</span></div>
+    <div class="stat-row"><span>⭐ Средняя оценка</span><span class="stat-value" id="avgRatingStat">0/16</span></div>
+    <div class="stat-row"><span>🌍 Любимая страна</span><span class="stat-value" id="topCountryStat">—</span></div>
+    <div class="stat-row"><span>📚 Любимый жанр</span><span class="stat-value" id="topGenreStat">—</span></div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО КНИГИ -->
+<div class="modal" id="bookModal" onclick="handleModalClick(event)">
+  <div class="book-page-header">
+    <h2>📖 О книге</h2>
+    <button class="close-btn" onclick="closeModal()">✕</button>
+  </div>
+  
+  <div class="book-page-content">
+    <!-- Строка с названием и оценкой -->
+    <div class="book-header-row">
+      <div class="book-title-wrapper">
+        <input type="text" class="book-title-input" id="bookTitleInput" placeholder="Название книги">
+      </div>
+      <div class="rating-corner">
+        <div class="rating-badge" onclick="event.stopPropagation(); toggleRatingDropdown()">
+          <span class="rating-number" id="totalRatingDisplay">0</span><span class="rating-max-small">/16</span>
+        </div>
+        <div class="rating-dropdown" id="ratingDropdown" onclick="event.stopPropagation()">
+          <div class="rating-criteria-item">
+            <div class="criteria-name">Красота изложения</div>
+            <div class="criteria-stars" id="criteriaStyle"></div>
+          </div>
+          <div class="rating-criteria-item">
+            <div class="criteria-name">Интересность сюжета</div>
+            <div class="criteria-stars" id="criteriaPlot"></div>
+          </div>
+          <div class="rating-criteria-item">
+            <div class="criteria-name">Глубина мысли</div>
+            <div class="criteria-stars" id="criteriaDepth"></div>
+          </div>
+          <div class="rating-criteria-item">
+            <div class="criteria-name">Общее впечатление</div>
+            <div class="criteria-stars" id="criteriaOverall"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Автор -->
+    <div class="book-field">
+      <input type="text" class="book-input author-input" id="bookAuthorInput" placeholder="Автор">
+    </div>
+    
+    <!-- Мета-информация в строку — равномерно по ширине -->
+    <div class="meta-row">
+      <input type="text" class="meta-input" id="bookYearInput" placeholder="Год">
+      <input type="text" class="meta-input" id="bookCountryInput" placeholder="Страна">
+      <input type="text" class="meta-input" id="bookGenreInput" placeholder="Жанр">
+    </div>
+    
+    <!-- Время в книге — динамичное поле с переносом -->
+    <div class="book-field">
+      <textarea class="dynamic-textarea" id="bookTimeInput" placeholder="Время в книге" rows="1"></textarea>
+    </div>
+    
+    <div class="section-divider"></div>
+    
+    <!-- Герои — динамичное поле -->
+    <div class="book-field">
+      <textarea class="dynamic-textarea" id="bookCharactersInput" placeholder="Герои" rows="1"></textarea>
+    </div>
+    
+    <div class="section-divider"></div>
+    
+    <!-- Сюжет — динамичное поле -->
+    <div class="book-field">
+      <textarea class="dynamic-textarea" id="bookPlotInput" placeholder="Сюжет" rows="1"></textarea>
+    </div>
+    
+    <div class="section-divider"></div>
+    
+    <!-- Впечатление — динамичное поле -->
+    <div class="book-field">
+      <textarea class="dynamic-textarea" id="bookImpressionInput" placeholder="Моё впечатление" rows="1"></textarea>
+    </div>
+    
+    <div class="section-divider"></div>
+    
+    <!-- Заметки — динамичное поле -->
+    <div class="book-field">
+      <textarea class="dynamic-textarea" id="bookNotesInput" placeholder="Заметки" rows="1"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- НИЖНЕЕ МЕНЮ -->
+<div class="bottom-menu">
+  <button class="menu-btn active" id="menuHome" onclick="switchPage('home')">
+    <span class="icon">🏠</span>
+    <span>Главная</span>
+  </button>
+  <button class="menu-btn" id="menuStats" onclick="switchPage('stats')">
+    <span class="icon">📊</span>
+    <span>Статистика</span>
+  </button>
+  <button class="menu-btn" onclick="openNewBookModal()">
+    <span class="icon">➕</span>
+    <span>Добавить</span>
+  </button>
+  <button class="menu-btn" onclick="exportData()">
+    <span class="icon">📤</span>
+    <span>Экспорт</span>
+  </button>
+  <button class="menu-btn" onclick="importData()">
+    <span class="icon">📥</span>
+    <span>Импорт</span>
+  </button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  let appData = { books: [] };
+  let currentBookId = null;
+  let ratings = { style: 0, plot: 0, depth: 0, overall: 0 };
+
+  // Автоматическое изменение высоты textarea
+  function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+
+  // Инициализация
+  function init() {
+    loadData();
+    renderHomePage();
+    updateStats();
+    initStars();
+    
+    // Настройка автосохранения и авторазмера для всех полей
+    const textInputs = [
+      'bookTitleInput', 'bookAuthorInput', 'bookYearInput', 'bookCountryInput', 'bookGenreInput'
+    ];
+    textInputs.forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', saveCurrentBook);
+    });
+    
+    const textareas = [
+      'bookTimeInput', 'bookCharactersInput', 'bookPlotInput', 'bookImpressionInput', 'bookNotesInput'
+    ];
+    textareas.forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', function() {
+        autoResize(this);
+        saveCurrentBook();
+      });
+    });
+    
+    // Закрытие дропдауна по клику вне
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.rating-corner')) {
+        closeRatingDropdown();
+      }
+    });
+  }
+
+  function loadData() {
+    try {
+      const saved = localStorage.getItem('literaryDiaryV5');
+      if (saved) {
+        appData = JSON.parse(saved);
+        if (!appData.books) appData.books = [];
+      }
+    } catch (e) {}
+  }
+
+  function saveData() {
+    try {
+      localStorage.setItem('literaryDiaryV5', JSON.stringify(appData));
+    } catch (e) {}
+  }
+
+  function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  window.switchPage = function(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page + 'Page').classList.add('active');
+    
+    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('menu' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active');
+    
+    if (page === 'stats') updateStats();
+    if (page === 'home') renderHomePage();
+  };
+
+  function renderHomePage() {
+    const container = document.getElementById('booksList');
+    
+    if (appData.books.length === 0) {
+      container.innerHTML = '<div class="empty-state">📚 Нажмите "Добавить", чтобы создать первую запись</div>';
+      return;
+    }
+    
+    container.innerHTML = appData.books.map(book => `
+      <div class="book-card" onclick="openBook('${book.id}')">
+        <div class="book-card-title">${escapeHtml(book.title || 'Без названия')}</div>
+        <div class="book-card-author">${escapeHtml(book.author || 'Автор не указан')}</div>
+        <div class="book-card-meta">
+          ${book.year ? `<span>📅 ${book.year}</span>` : ''}
+          ${book.country ? `<span>🌍 ${book.country}</span>` : ''}
+          ${book.genre ? `<span>📚 ${book.genre}</span>` : ''}
+          ${book.rating ? `<span>⭐ ${book.rating}/16</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.openNewBookModal = function() {
+    currentBookId = null;
+    
+    document.getElementById('bookTitleInput').value = '';
+    document.getElementById('bookAuthorInput').value = '';
+    document.getElementById('bookYearInput').value = '';
+    document.getElementById('bookCountryInput').value = '';
+    document.getElementById('bookGenreInput').value = '';
+    
+    const textareas = ['bookTimeInput', 'bookCharactersInput', 'bookPlotInput', 'bookImpressionInput', 'bookNotesInput'];
+    textareas.forEach(id => {
+      const el = document.getElementById(id);
+      el.value = '';
+      autoResize(el);
+    });
+    
+    ratings = { style: 0, plot: 0, depth: 0, overall: 0 };
+    updateTotalRating();
+    renderAllStars();
+    closeRatingDropdown();
+    
+    document.getElementById('bookModal').classList.add('active');
+  };
+
+  window.openBook = function(id) {
+    const book = appData.books.find(b => b.id === id);
+    if (!book) return;
+    
+    currentBookId = id;
+    
+    document.getElementById('bookTitleInput').value = book.title || '';
+    document.getElementById('bookAuthorInput').value = book.author || '';
+    document.getElementById('bookYearInput').value = book.year || '';
+    document.getElementById('bookCountryInput').value = book.country || '';
+    document.getElementById('bookGenreInput').value = book.genre || '';
+    
+    const textareas = ['bookTimeInput', 'bookCharactersInput', 'bookPlotInput', 'bookImpressionInput', 'bookNotesInput'];
+    const fields = ['timePeriod', 'characters', 'plot', 'impression', 'notes'];
+    textareas.forEach((id, i) => {
+      const el = document.getElementById(id);
+      el.value = book[fields[i]] || '';
+      autoResize(el);
+    });
+    
+    ratings = book.ratings || { style: 0, plot: 0, depth: 0, overall: 0 };
+    updateTotalRating();
+    renderAllStars();
+    closeRatingDropdown();
+    
+    document.getElementById('bookModal').classList.add('active');
+  };
+
+  window.closeModal = function() {
+    saveCurrentBook();
+    document.getElementById('bookModal').classList.remove('active');
+    closeRatingDropdown();
+    renderHomePage();
+    updateStats();
+  };
+
+  window.handleModalClick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      closeModal();
+    }
+  };
+
+  function saveCurrentBook() {
+    if (!currentBookId && !document.getElementById('bookTitleInput').value.trim()) return;
+    
+    const bookData = {
+      title: document.getElementById('bookTitleInput').value.trim(),
+      author: document.getElementById('bookAuthorInput').value.trim(),
+      year: document.getElementById('bookYearInput').value.trim(),
+      country: document.getElementById('bookCountryInput').value.trim(),
+      genre: document.getElementById('bookGenreInput').value.trim(),
+      timePeriod: document.getElementById('bookTimeInput').value.trim(),
+      characters: document.getElementById('bookCharactersInput').value.trim(),
+      plot: document.getElementById('bookPlotInput').value.trim(),
+      impression: document.getElementById('bookImpressionInput').value.trim(),
+      notes: document.getElementById('bookNotesInput').value.trim(),
+      ratings: { ...ratings },
+      rating: ratings.style + ratings.plot + ratings.depth + ratings.overall
+    };
+    
+    if (currentBookId) {
+      const index = appData.books.findIndex(b => b.id === currentBookId);
+      if (index !== -1) appData.books[index] = { ...appData.books[index], ...bookData };
+    } else if (bookData.title) {
+      bookData.id = Date.now() + '-' + Math.random().toString(36);
+      appData.books.push(bookData);
+      currentBookId = bookData.id;
+    }
+    
+    saveData();
+  }
+
+  function initStars() {
+    renderAllStars();
+  }
+
+  function renderAllStars() {
+    renderStars('criteriaStyle', 'style');
+    renderStars('criteriaPlot', 'plot');
+    renderStars('criteriaDepth', 'depth');
+    renderStars('criteriaOverall', 'overall');
+  }
+
+  function renderStars(containerId, criteria) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    for (let i = 1; i <= 4; i++) {
+      const star = document.createElement('span');
+      star.className = 'criteria-star' + (i <= ratings[criteria] ? ' filled' : '');
+      star.textContent = '★';
+      star.onclick = () => {
+        ratings[criteria] = i;
+        renderAllStars();
+        updateTotalRating();
+        saveCurrentBook();
+      };
+      container.appendChild(star);
+    }
+  }
+
+  function updateTotalRating() {
+    const total = ratings.style + ratings.plot + ratings.depth + ratings.overall;
+    document.getElementById('totalRatingDisplay').textContent = total;
+  }
+
+  window.toggleRatingDropdown = function() {
+    const dropdown = document.getElementById('ratingDropdown');
+    dropdown.classList.toggle('active');
+  };
+
+  function closeRatingDropdown() {
+    document.getElementById('ratingDropdown').classList.remove('active');
+  }
+
+  function updateStats() {
+    const books = appData.books;
+    document.getElementById('totalBooksStat').textContent = books.length;
+    
+    const totalRating = books.reduce((sum, b) => sum + (b.rating || 0), 0);
+    const avgRating = books.length > 0 ? (totalRating / books.length).toFixed(1) : 0;
+    document.getElementById('avgRatingStat').textContent = `${avgRating}/16`;
+    
+    const countries = {}, genres = {};
+    books.forEach(b => {
+      if (b.country) countries[b.country] = (countries[b.country] || 0) + 1;
+      if (b.genre) genres[b.genre] = (genres[b.genre] || 0) + 1;
+    });
+    
+    const topCountry = Object.entries(countries).sort((a, b) => b[1] - a[1])[0];
+    const topGenre = Object.entries(genres).sort((a, b) => b[1] - a[1])[0];
+    
+    document.getElementById('topCountryStat').textContent = topCountry ? topCountry[0] : '—';
+    document.getElementById('topGenreStat').textContent = topGenre ? topGenre[0] : '—';
+  }
+
+  window.exportData = function() {
+    const dataStr = JSON.stringify(appData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const date = new Date();
+    a.download = `Лит_дневник_${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    showToast(isIOS ? '📱 Файл сохранён в Файлы → Загрузки' : '💾 Файл сохранён в Загрузки', 'success');
+  };
+
+  window.importData = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (imported.books && Array.isArray(imported.books)) {
+            appData = imported;
+            saveData();
+            renderHomePage();
+            updateStats();
+            showToast('✅ Данные импортированы!', 'success');
+          } else {
+            showToast('❌ Неверный формат файла', 'info');
+          }
+        } catch (err) {
+          showToast('❌ Ошибка чтения файла', 'info');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
